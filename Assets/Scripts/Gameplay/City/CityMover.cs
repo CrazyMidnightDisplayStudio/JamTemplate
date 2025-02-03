@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using Gameplay.TileGeneration;
 using Gameplay.Utils;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Gameplay.City
 {
@@ -10,30 +11,26 @@ namespace Gameplay.City
     {
         [SerializeField] private TileGenerator _tileGenerator;
 
+        private SpeedController _speedController = new SpeedController(2.5f);
         private RotateObject _rotator = new RotateObject();
-        private Queue<CityTile> _tiles = new Queue<CityTile>();
-        private bool isRotating = false;
-
-        private void Start()
-        {
-            _tiles.Enqueue(_tileGenerator.Generate(Vector3.zero, transform));
-        }
+        public static bool IsRotating { get; private set; } = false;
 
         private void FixedUpdate()
         {
-            foreach (var tile in _tiles)
+            foreach (var tile in _tileGenerator.Tiles)
             {
-                tile.Move();
+                tile.Move(_speedController.Speed);
             }
         }
 
         public async void Rotate()
         {
-            if (isRotating) return;
+            if (IsRotating) return;
 
-            isRotating = true;
+            IsRotating = true;
+            _tileGenerator.RestoreOrderOnRotation();
             await _rotator.RotateToAngleTask(transform, CityRoot.RotateDirection, 1f);
-            isRotating = false;
+            IsRotating = false;
         }
 
         private void OnDestroy()
