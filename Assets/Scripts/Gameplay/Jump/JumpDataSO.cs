@@ -18,7 +18,7 @@ namespace Gameplay.Jump
         [Range(-1, 1)]
         public float fallGravityScale; //Изменяет скорость падения игрока после достижения пика прыжка на процент (+ ускоряет, - замедляет)
         [Range(-1, 1)]
-        public float jumpCutGravityScale; //Изменяет скорость падения игрока, если игрок отпускает кнопку прыжка, продолжая прыгать (+ ускоряет, - замедляет)
+        public float jumpCutGravityScale; //Изменяет скорость падения игрока, если игрок отпускает кнопку прыжка, продолжая прыгать (1 - 100% прыжка без прерывания, -1 - -100% от текущей скорости прыжка)
         public float maxFallSpeed; //Максимальная скорость падения (предельная скорость) игрока при падении.
         [Range(0f, 0.9f)]
         public float jumpHangGravityMult; //Уменьшает силу тяжести, находясь близко к вершине (желаемой максимальной высоте) прыжка, позволяет немного зависнуть в воздухе
@@ -27,10 +27,10 @@ namespace Gameplay.Jump
         //Обратный вызов Unity, вызываемый при обновлении инспектора
         private void OnValidate()
         {
-            //Рассчитайте силу тяжести по формуле (gravity = 2 * jumpHeight / timeToJumpApex^2)  обратная формула g = 2h / t²
+            // Рассчёт силы гравитации от желаемой высоты прыжка и времени достижения этой высоты (gravity = 2 * jumpHeight / timeToJumpApex^2)  обратная формула g = 2h / t²
             gravityStrength = -(2 * jumpHeight) / (jumpTimeToApex * jumpTimeToApex);
             Debug.Log($"Гравитация равна: {gravityStrength}");
-            //Рассчитайте силу прыжка по формуле (jumpForce = gravity * timeToJumpApex)
+            //Нужная сила прыжка для данной гравитации и времени(jumpForce = gravity * timeToJumpApex)
             jumpForce = Mathf.Abs(gravityStrength) * jumpTimeToApex;
             Debug.Log($"Сила прыжка равна: {jumpForce}");
 

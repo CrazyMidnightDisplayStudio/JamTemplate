@@ -1,5 +1,7 @@
 using System;
+using Assets.Scripts.Gameplay.InputJump.Installer;
 using UnityEngine;
+using Zenject;
 
 namespace Gameplay.Jump
 {
@@ -18,28 +20,26 @@ namespace Gameplay.Jump
         [SerializeField] LayerMask _groundLayer;
         public float LastPressedJumpTime { get; private set; } // время касания земли нужно для буфферизации прыжка
         public float LastOnGroundTime { get; private set; } // время кайота
+        private IJumpInput _jumpInput;
+        private PlayerInputActions _playerInputActions;
 
+        [Inject]
+        public void Construct(IJumpInput jumpInput)
+        {
+            _jumpInput = jumpInput;
+        }
         void Start()
         {
             rb = GetComponent<Rigidbody>();
-            IsGravity(false);
+            IsGravity(false); // выключаем базовую гравитацию для объекта
+            _jumpInput.StartJump += () => StartJump();
+            _jumpInput.CancelJump += () => CancelJump();
         }
 
         // Update is called once per frame
         void Update()
         {
             LastPressedJumpTime -= Time.deltaTime;
-
-            if (Input.GetKeyDown(KeyCode.Space))// заменить на интерфейс инпута
-            {
-                OnJump();
-                isPressButton = true;
-            }
-            else if (Input.GetKeyUp(KeyCode.Space))
-            {
-                isPressButton = false;
-                _isJumpCut = CanJumpCut();
-            }
 
             if (CanJump() && LastPressedJumpTime > 0)
             {
@@ -48,6 +48,18 @@ namespace Gameplay.Jump
             CheckedGround();
         }
 
+        private void StartJump()
+        {
+            Debug.Log("START");
+            OnJump();
+            isPressButton = true;
+        }
+        private void CancelJump()
+        {
+            Debug.Log("CANCEL");
+            isPressButton = false;
+            _isJumpCut = CanJumpCut();
+        }
         private void CheckedGround()
         {
             if (_isJumping && rb.velocity.y < 0)
@@ -100,7 +112,7 @@ namespace Gameplay.Jump
             if (_isJumpCut)
             {
                 Debug.Log("Jump Cut");
-                rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y * _jumpData.fallGravityScale, 0);
+                rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y * _jumpData.jumpCutGravityScale, 0);
             }
             else if (Math.Abs(rb.velocity.y) < _jumpData.jumpHangGravityMult && isPressButton && (_isJumping || _isFalling))
             {
@@ -119,6 +131,11 @@ namespace Gameplay.Jump
         {
             Gizmos.color = Color.blue;
             Gizmos.DrawSphere(_groundCheckPoint.position, _radius);
+        }
+        private void OnDestroy()
+        {
+            _jumpInput.StartJump -= () => StartJump();
+            _jumpInput.CancelJump -= () => CancelJump();
         }
     }
 }
